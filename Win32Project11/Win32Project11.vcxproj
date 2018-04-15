@@ -148,15 +148,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AFS.cpp" />
     <ClCompile Include="ChannelConfig.cpp" />
+    <ClCompile Include="ColorBars.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="FullWhite.cpp" />
     <ClCompile Include="Generator.cpp" />
+    <ClCompile Include="Grayscale.cpp" />
     <ClCompile Include="MainDialog.cpp" />
+    <ClCompile Include="ResolutionPattern.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AFS.h" />
     <ClInclude Include="ChannelConfig.h" />
+    <ClInclude Include="ColorBars.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="FullWhite.h" />
     <ClInclude Include="Generator.h" />
+    <ClInclude Include="Grayscale.h" />
+    <ClInclude Include="ResolutionPattern.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

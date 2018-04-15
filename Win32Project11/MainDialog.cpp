@@ -7,6 +7,11 @@
 #include "Configuration.h"
 #include "Generator.h"
 #include "ChannelConfig.h"
+#include "ResolutionPattern.h"
+#include "AFS.h"
+#include "Grayscale.h"
+#include "ColorBars.h"
+#include "FullWhite.h"
 
 Configuration *myConfig;
 
@@ -22,7 +27,7 @@ public:
 		, ViewerDistance(0)
 		, ScreenHFOV(0)
 		, ScreenVFOV(0)
-		, NumberOfChannels(5)
+		, NumberOfChannels(0)
 		, ScreenGeometry(_T(""))
 		, TestPattern(_T(""))
 		, ChannelHFOV(0)
@@ -89,7 +94,23 @@ public:
 	afx_msg void OnCbnSelchangeChannelSelect();
 	void setScreenGui();
 	void setChannelGui(int sel);
-	afx_msg void OnBnClickedButtonApply();
+	void resetChannels();
+	afx_msg void OnBnClickedButtonPreview();
+	afx_msg void OnBnClickedButtonEditTest();
+	afx_msg void OnCbnSelchangeTestPattern();
+	afx_msg void OnEnChangeViewerDistance();
+	afx_msg void OnEnChangeScreenHfov();
+	afx_msg void OnEnChangeScreenVfov();
+	afx_msg void OnEnChangeChannelVfov();
+	afx_msg void OnEnChangeChannelPositionX();
+	afx_msg void OnEnChangeChannelPositionY();
+	afx_msg void OnEnChangeChannelDistance();
+	afx_msg void OnEnChangeChannelIp();
+	afx_msg void OnEnChangeChannelResolutionX();
+	afx_msg void OnEnChangeChannelResolutionY();
+	int channelIndex;
+	int testPatternIndex;
+	afx_msg void OnBnClickedButtonRun();
 };
 
 BEGIN_MESSAGE_MAP(MainDialog, CDialog)
@@ -99,7 +120,20 @@ BEGIN_MESSAGE_MAP(MainDialog, CDialog)
 	ON_EN_CHANGE(IDC_CHANNEL_HFOV, &MainDialog::OnEnChangeChannelHfov)
 	ON_EN_CHANGE(IDC_NUMBER_OF_CHANNELS, &MainDialog::OnEnChangeNumberOfChannels)
 	ON_CBN_SELCHANGE(IDC_CHANNEL_SELECT, &MainDialog::OnCbnSelchangeChannelSelect)
-	ON_BN_CLICKED(IDC_BUTTON_APPLY, &MainDialog::OnBnClickedButtonApply)
+	ON_BN_CLICKED(IDC_BUTTON_PREVIEW, &MainDialog::OnBnClickedButtonPreview)
+	ON_BN_CLICKED(IDC_BUTTON_EDIT_TEST, &MainDialog::OnBnClickedButtonEditTest)
+	ON_CBN_SELCHANGE(IDC_TEST_PATTERN, &MainDialog::OnCbnSelchangeTestPattern)
+	ON_EN_CHANGE(IDC_VIEWER_DISTANCE, &MainDialog::OnEnChangeViewerDistance)
+	ON_EN_CHANGE(IDC_SCREEN_HFOV, &MainDialog::OnEnChangeScreenHfov)
+	ON_EN_CHANGE(IDC_SCREEN_VFOV, &MainDialog::OnEnChangeScreenVfov)
+	ON_EN_CHANGE(IDC_CHANNEL_VFOV, &MainDialog::OnEnChangeChannelVfov)
+	ON_EN_CHANGE(IDC_CHANNEL_POSITION_X, &MainDialog::OnEnChangeChannelPositionX)
+	ON_EN_CHANGE(IDC_CHANNEL_POSITION_Y, &MainDialog::OnEnChangeChannelPositionY)
+	ON_EN_CHANGE(IDC_CHANNEL_DISTANCE, &MainDialog::OnEnChangeChannelDistance)
+	ON_EN_CHANGE(IDC_CHANNEL_IP, &MainDialog::OnEnChangeChannelIp)
+	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_X, &MainDialog::OnEnChangeChannelResolutionX)
+	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_Y, &MainDialog::OnEnChangeChannelResolutionY)
+	ON_BN_CLICKED(IDC_BUTTON_RUN, &MainDialog::OnBnClickedButtonRun)
 END_MESSAGE_MAP()
 
 class MyApp : public CWinApp
@@ -116,7 +150,6 @@ public:
 		m_pMainWnd = &dlg;
 		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 		myConfig = new Configuration();
-		//ScreenHFOV = 10;
 		INT_PTR nResponce = dlg.DoModal();
 		return TRUE;
 	}
@@ -128,8 +161,14 @@ MainDialog theDlg;
 void MainDialog::OnFileNew()
 {
 	myConfig = new Configuration();
+	myConfig->set_num_channels(1);
+	ChannelConfig temp;
+	myConfig->get_channels()->push_back(temp);
+	NumberOfChannels = 1;
+
+	resetChannels();
 	setScreenGui();
-	//setChannelGui(0);			//Does creating a new config file intialize a channel? No?
+	setChannelGui(0);	
 }
 
 
@@ -141,8 +180,10 @@ void MainDialog::OnFileOpen()
 		inFile.open(openDlg.GetPathName(), std::ios::in);
 		myConfig = new Configuration(inFile);
 		inFile.close();
+
+		NumberOfChannels = myConfig->get_num_channels();
+		resetChannels();
 		setScreenGui();
-		setChannelGui(0);		//Does creating a new config file intialize a channel? No?
 	}
 }
 
@@ -162,65 +203,43 @@ void MainDialog::OnFileSave()
 }
 
 
-void MainDialog::OnEnChangeChannelHfov()
-{
-	UpdateData(true);
-	ScreenHFOV = ChannelHFOV;
-	UpdateData(false);
-
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialog::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
-}
-
-
 void MainDialog::OnEnChangeNumberOfChannels()
 {
-	/*
+	int oldNumber = NumberOfChannels;
+	CString str;
+
 	UpdateData(true);
-	for (int i = 0; i < NumberOfChannels; i++)
-	{
 
-
+	resetChannels();
+	
+	if (oldNumber == 0) {
+		for (int i = 0; i < NumberOfChannels; i++) {
+			ChannelConfig *channel = new ChannelConfig();
+			myConfig->get_channels()->push_back(*channel);
+		}
+	}
+	else if (oldNumber > NumberOfChannels) {
+		for (int i = myConfig->get_num_channels(); i < NumberOfChannels; i++) {
+			ChannelConfig *channel = new ChannelConfig();
+			myConfig->get_channels()->push_back(*channel);
+		}
+	}
+	else {
+		myConfig->get_channels()->resize(NumberOfChannels);
 	}
 
-
-	UpdateData(false);	*/
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialog::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
+	//setChannelGui(oldNumber);	//NEW		Still displaying old numbers if reducing the number of channels down!
+	myConfig->set_num_channels(NumberOfChannels);	
+	UpdateData(false);
 }
 
 
 void MainDialog::OnCbnSelchangeChannelSelect()
 {
-	/*
-	UpdateData(true);
-	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_CHANNEL_SELECT);
-	CString str;
-	for (int i = 0; i < NumberOfChannels; i++)
-	{
-		str.Format(L"%d", i);
-		pCombo->AddString(str);
+	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_CHANNEL_SELECT);
+	channelIndex = m_pComboBox->GetCurSel();
 
-	}
-
-	pCombo->AddString(_T("TESTER"));
-	UpdateData(false);
-	// TODO: Add your control notification handler code here
-
-	for (int i = 0; i < NumberOfChannels; i++)
-	{
-
-
-	}		*/
-	setChannelGui(ChannelSelect);
+	setChannelGui(channelIndex);
 }
 
 
@@ -230,12 +249,13 @@ void MainDialog::setScreenGui()
 	ViewerDistance = myConfig->get_viewer_distance();
 	ScreenHFOV = myConfig->get_viewer_distance();
 	ScreenVFOV = myConfig->get_total_fov_v();
-	//NumberOfChannels =			//Still needs to be added to config file?
+	NumberOfChannels = myConfig->get_num_channels();	
 
 	UpdateData(false);
 }
 
-void MainDialog::setChannelGui(int sel)	//Um, start at 0 or 1?
+
+void MainDialog::setChannelGui(int sel)	
 {
 	UpdateData(true);
 
@@ -252,7 +272,178 @@ void MainDialog::setChannelGui(int sel)	//Um, start at 0 or 1?
 }
 
 
-void MainDialog::OnBnClickedButtonApply()
+void MainDialog::resetChannels()
 {
-	//setScreenGui();
+	CString str;
+	
+	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_CHANNEL_SELECT);
+	m_pComboBox->ResetContent();
+
+	for (int i = 1; i <= NumberOfChannels; i++)
+	{
+		str.Format(_T("%d"), i);
+		m_pComboBox->AddString(str);
+	}
 }
+
+
+void MainDialog::OnBnClickedButtonPreview()
+{
+	//FILL WITH PREVIEW WINDOW
+}
+
+
+void MainDialog::OnBnClickedButtonRun()
+{
+	//Fill with running networking
+}
+
+
+void MainDialog::OnBnClickedButtonEditTest()
+{
+	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_TEST_PATTERN);
+	testPatternIndex = m_pComboBox->GetCurSel();
+
+	AFS dlg0;
+	ResolutionPattern dlg1;
+	ColorBars dlg2;
+	FullWhite dlg3;
+	Grayscale dlg4;
+
+	switch (testPatternIndex)
+	{
+	case 0:
+		if (dlg0.DoModal() == IDOK)
+		{
+
+		}
+		break;
+	case 1:
+		if (dlg1.DoModal() == IDOK)
+		{
+
+		}
+		break;
+	case 2:
+		if (dlg2.DoModal() == IDOK)
+		{
+
+		}
+		break;
+	case 3:
+		if (dlg3.DoModal() == IDOK)
+		{
+
+		}
+		break;
+	case 4:
+		if (dlg4.DoModal() == IDOK)
+		{
+
+		}
+		break;
+	default:
+		MessageBox(_T("There is nothing to edit with this test pattern."));
+		break;
+	}
+}
+
+
+void MainDialog::OnCbnSelchangeTestPattern()
+{
+	//Test pattern drop down box
+}
+
+
+void MainDialog::OnEnChangeViewerDistance()
+{
+	UpdateData(true);
+	myConfig->set_viewer_distance(ViewerDistance);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeScreenHfov()
+{
+	UpdateData(true);
+	myConfig->set_total_fov_h(ScreenHFOV);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeScreenVfov()
+{
+	UpdateData(true);
+	myConfig->set_total_fov_v(ScreenVFOV);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelHfov()
+{
+	UpdateData(true);
+	myConfig->get_channels()->at(channelIndex).set_fov_h(ChannelHFOV);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelVfov()
+{
+	UpdateData(true);
+	myConfig->get_channels()->at(channelIndex).set_fov_v(ChannelVFOV);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelPositionX()
+{
+	UpdateData(true);
+	myConfig->get_channels()->at(channelIndex).set_location_h(ChannelPosX);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelPositionY()
+{
+	UpdateData(true);
+	myConfig->get_channels()->at(channelIndex).set_location_v(ChannelPosY);
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelDistance()
+{
+	//NOT SETUP IN CONFIG
+	UpdateData(true);
+	//myConfig->get_channels()->at(channelIndex).
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelIp()
+{
+	//NOT SETUP IN CONFIG
+	UpdateData(true);
+	//myConfig->get_channels()->at(channelIndex).
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelResolutionX()
+{
+	//NOT SETUP IN CONFIG
+	UpdateData(true);
+	//myConfig->get_channels()->at(channelIndex).
+	UpdateData(false);
+}
+
+
+void MainDialog::OnEnChangeChannelResolutionY()
+{
+	//NOT SETUP IN CONFIG
+	UpdateData(true);
+	//myConfig->get_channels()->at(channelIndex).
+	UpdateData(false);
+}
+
+
