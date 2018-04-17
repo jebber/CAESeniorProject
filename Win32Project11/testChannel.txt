@@ -1,0 +1,24 @@
+name:Untitled Configuration
+total_fov_h:100
+total_fov_v:50
+viewer_distance:0
+num_channels:2
+test_pattern:1
+-:
+number:0
+fov_h:100
+fov_v:25
+location_h:0
+location_v:0
+resolution_h:2880
+resolution_v:1800
+IPaddress:
+-:
+number:0
+fov_h:0
+fov_v:0
+location_h:0
+location_v:0
+resolution_h:0
+resolution_v:0
+IPaddress:

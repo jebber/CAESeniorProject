@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
 #include "stdafx.h"
 #include <afxwin.h>
 #include <afxdlgs.h>
@@ -31,6 +32,10 @@ public:
 	std::ofstream outFile;
 	std::ifstream inFile;
 	DisplayFrame* frm;
+
+	bool MainDialog::senddata(SOCKET sock, void *buf, int buflen);
+	bool MainDialog::sendlong(SOCKET sock, long value);
+	bool MainDialog::sendfile(SOCKET sock, FILE *f);
 	
 	MainDialog(CWnd* pParent = NULL): CDialog(MainDialog::IDD, pParent)
 		, ViewerDistance(0)
@@ -324,15 +329,6 @@ void MainDialog::OnBnClickedButtonPreview()
 void MainDialog::OnBnClickedButtonRun()
 {
 	//OnFileSave();
-	CString pathname = "test.txt";
-	char *sendbuf = new char[MAX_FILE_SIZE];
-	
-	inFile.open(pathname, std::ios::in);
-	if (!inFile.is_open()) {
-		MessageBox(_T("Unable to open file"));
-		return;
-	}
-	inFile.read(sendbuf, MAX_FILE_SIZE);
 
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -345,6 +341,7 @@ void MainDialog::OnBnClickedButtonRun()
 	addr.ai_family = AF_UNSPEC;
 	addr.ai_socktype = SOCK_STREAM;
 	addr.ai_protocol = IPPROTO_TCP;
+
 
 	// Resolve the server address and port
 	getaddrinfo("127.0.0.1", DEFAULT_PORT, &addr, &result);
@@ -374,13 +371,11 @@ void MainDialog::OnBnClickedButtonRun()
 		return;
 	}
 
-	// Send the buffer created from config file
-	check = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (check == SOCKET_ERROR) {
-		MessageBox(_T("Send failed"));
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return;
+	FILE *filehandle = fopen("testChannel.txt", "rb");
+	if (filehandle != NULL)
+	{
+		sendfile(ConnectSocket, filehandle);
+		fclose(filehandle);
 	}
 
 
@@ -419,7 +414,7 @@ void MainDialog::OnBnClickedButtonEditTest()
 		dlg0.AFSazimuth = myConfig->get_azimuth();
 		dlg0.AFSelevation = myConfig->get_elevation();
 		//dlg0.AFSspeedOfRotation
-		dlg0.AFSrange = myConfig->get_range;
+		dlg0.AFSrange = myConfig->get_range();
 		if (dlg0.DoModal() == IDOK)
 		{
 			myConfig->set_azimuth(dlg0.AFSazimuth);
@@ -431,7 +426,7 @@ void MainDialog::OnBnClickedButtonEditTest()
 	case 1:
 		dlg1.ResolutionAzimuth = myConfig->get_azimuth();
 		dlg1.ResolutionElevation = myConfig->get_elevation();
-		dlg1.ResolutionRange = myConfig->get_range;
+		dlg1.ResolutionRange = myConfig->get_range();
 		if (dlg1.DoModal() == IDOK)
 		{
 			myConfig->set_azimuth(dlg1.ResolutionAzimuth);
@@ -586,3 +581,58 @@ void MainDialog::OnEnChangeChannelResolutionY()
 	UpdateData(false);
 }
 
+bool MainDialog::senddata(SOCKET sock, void *buf, int buflen)
+{
+	char *pbuf = (char *)buf;
+
+	while (buflen > 0)
+	{
+		int num = send(sock, pbuf, buflen, 0);
+		if (num == SOCKET_ERROR)
+		{
+			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			{
+				// optional: use select() to check for timeout to fail the send
+				continue;
+			}
+			return false;
+		}
+
+		pbuf += num;
+		buflen -= num;
+	}
+
+	return true;
+}
+
+bool MainDialog::sendlong(SOCKET sock, long value)
+{
+	value = htonl(value);
+	return senddata(sock, &value, sizeof(value));
+}
+
+bool MainDialog::sendfile(SOCKET sock, FILE *f)
+{
+	fseek(f, 0, SEEK_END);
+	long filesize = ftell(f);
+	rewind(f);
+	if (filesize == EOF)
+		return false;
+	if (!sendlong(sock, filesize))
+		return false;
+	if (filesize > 0)
+	{
+		char buffer[1024];
+		do
+		{
+			size_t num = min(filesize, sizeof(buffer));
+			num = fread(buffer, 1, num, f);
+			if (num < 1)
+				return false;
+			if (!senddata(sock, buffer, num))
+				return false;
+			filesize -= num;
+		} while (filesize > 0);
+	}
+	return true;
+}
