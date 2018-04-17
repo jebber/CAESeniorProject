@@ -21,15 +21,20 @@ private:
 	int num_channels;
 	int test_pattern;
 	vector<ChannelConfig>* channels;
-	
 
+	//Test pattern parameters
+	bool display_horizontal;
+	bool full_pattern;
+	int opacity;
+	int azimuth;
+	int elevation;
+	int range;
+	
 public:
 	//Constructors & Destructor
 	Configuration(ifstream& in_file);
 	Configuration();
 	~Configuration();
-	
-	
 
 	//Setters
 	void set_name(string input);
@@ -38,6 +43,12 @@ public:
 	void set_viewer_distance(float input);
 	void set_num_channels(int input);
 	void set_test_pattern(int input);
+	void set_display_horizontal(bool input);
+	void set_full_pattern(bool input);
+	void set_opacity(int input);
+	void set_azimuth(int input);
+	void set_elevation(int input);
+	void set_range(int input);
 
 	//Getters
 	string get_name();
@@ -47,6 +58,12 @@ public:
 	int get_num_channels();
 	int get_test_pattern();
 	vector<ChannelConfig>* get_channels();
+	bool get_display_horizontal();
+	bool get_full_pattern();
+	int get_opacity();
+	int get_azimuth();
+	int get_elevation();
+	int get_range();
 
 	//Output
 	void display_config_console();

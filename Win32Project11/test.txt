@@ -1,0 +1,22 @@
+name:Untitled Configuration
+total_fov_h:800
+total_fov_v:600
+viewer_distance:0
+num_channels:2
+test_pattern:4
+-:
+number:0
+fov_h:300
+fov_v:300
+location_h:45
+location_v:45
+resolution_h:0
+resolution_v:0
+-:
+number:0
+fov_h:300
+fov_v:300
+location_h:125
+location_v:45
+resolution_h:0
+resolution_v:0

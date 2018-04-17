@@ -25,4 +25,5 @@ public:
 	int AFSelevation;
 	int AFSrange;
 	int AFSspeedOfRotation;
+	afx_msg void OnFileSaveas();
 };

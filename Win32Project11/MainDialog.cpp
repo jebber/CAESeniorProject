@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include <afxwin.h>
 #include <afxdlgs.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <iostream>
 #include <fstream>
 #include "resource.h"
@@ -12,6 +14,12 @@
 #include "Grayscale.h"
 #include "ColorBars.h"
 #include "FullWhite.h"
+#include "DisplayFrame.h"
+
+#pragma comment(lib, "Ws2_32.lib")
+
+#define DEFAULT_PORT "27015"
+#define MAX_FILE_SIZE 1000
 
 Configuration *myConfig;
 
@@ -22,6 +30,7 @@ public:
 	CMenu MainMenu;
 	std::ofstream outFile;
 	std::ifstream inFile;
+	DisplayFrame* frm;
 	
 	MainDialog(CWnd* pParent = NULL): CDialog(MainDialog::IDD, pParent)
 		, ViewerDistance(0)
@@ -111,6 +120,7 @@ public:
 	int channelIndex;
 	int testPatternIndex;
 	afx_msg void OnBnClickedButtonRun();
+	afx_msg void OnFileSaveas();
 };
 
 BEGIN_MESSAGE_MAP(MainDialog, CDialog)
@@ -134,6 +144,7 @@ BEGIN_MESSAGE_MAP(MainDialog, CDialog)
 	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_X, &MainDialog::OnEnChangeChannelResolutionX)
 	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_Y, &MainDialog::OnEnChangeChannelResolutionY)
 	ON_BN_CLICKED(IDC_BUTTON_RUN, &MainDialog::OnBnClickedButtonRun)
+	ON_COMMAND(ID_FILE_SAVEAS, &MainDialog::OnFileSaveas)
 END_MESSAGE_MAP()
 
 class MyApp : public CWinApp
@@ -202,6 +213,21 @@ void MainDialog::OnFileSave()
 	}
 }
 
+void MainDialog::OnFileSaveas()
+{
+	if (myConfig == NULL) {
+		MessageBox(_T("No Configuration to save"));
+		return;
+	}
+	CFileDialog saveDlg(FALSE, NULL, NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("txt Files(*.txt)|*.txt||"), this);
+	if (saveDlg.DoModal() == IDOK) {
+		outFile.open(saveDlg.GetPathName(), std::ios::out);
+		myConfig->output_config_file(outFile);
+		outFile.close();
+	}
+}
+
 
 void MainDialog::OnEnChangeNumberOfChannels()
 {
@@ -247,7 +273,7 @@ void MainDialog::setScreenGui()
 {
 	UpdateData(true);
 	ViewerDistance = myConfig->get_viewer_distance();
-	ScreenHFOV = myConfig->get_viewer_distance();
+	ScreenHFOV = myConfig->get_total_fov_h();
 	ScreenVFOV = myConfig->get_total_fov_v();
 	NumberOfChannels = myConfig->get_num_channels();	
 
@@ -289,13 +315,79 @@ void MainDialog::resetChannels()
 
 void MainDialog::OnBnClickedButtonPreview()
 {
-	//FILL WITH PREVIEW WINDOW
+	frm = new DisplayFrame (myConfig, 0);
+	frm->ShowWindow(SW_SHOW);
+	frm->UpdateWindow();
 }
 
 
 void MainDialog::OnBnClickedButtonRun()
 {
-	//Fill with running networking
+	//OnFileSave();
+	CString pathname = "test.txt";
+	char *sendbuf = new char[MAX_FILE_SIZE];
+	
+	inFile.open(pathname, std::ios::in);
+	if (!inFile.is_open()) {
+		MessageBox(_T("Unable to open file"));
+		return;
+	}
+	inFile.read(sendbuf, MAX_FILE_SIZE);
+
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	struct addrinfo *result = NULL,
+		*ptr = NULL,
+		addr;
+
+	ZeroMemory(&addr, sizeof(addr));
+	addr.ai_family = AF_UNSPEC;
+	addr.ai_socktype = SOCK_STREAM;
+	addr.ai_protocol = IPPROTO_TCP;
+
+	// Resolve the server address and port
+	getaddrinfo("127.0.0.1", DEFAULT_PORT, &addr, &result);
+
+	SOCKET ConnectSocket = INVALID_SOCKET;
+
+	// Attempt to connect to the first address returned by
+	// the call to getaddrinfo
+	ptr = result;
+
+	// Create a SOCKET for connecting to channel
+	ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+		ptr->ai_protocol);
+
+	// Connect to server.
+	int check = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+	if (check == SOCKET_ERROR) {
+		closesocket(ConnectSocket);
+		ConnectSocket = INVALID_SOCKET;
+	}
+
+	freeaddrinfo(result);
+
+	if (ConnectSocket == INVALID_SOCKET) {
+		MessageBox(_T("Unable to connect to server!"));
+		WSACleanup();
+		return;
+	}
+
+	// Send the buffer created from config file
+	check = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+	if (check == SOCKET_ERROR) {
+		MessageBox(_T("Send failed"));
+		closesocket(ConnectSocket);
+		WSACleanup();
+		return;
+	}
+
+
+	// cleanup
+	closesocket(ConnectSocket);
+	WSACleanup();
+
 }
 
 
@@ -431,19 +523,19 @@ void MainDialog::OnEnChangeChannelIp()
 
 void MainDialog::OnEnChangeChannelResolutionX()
 {
-	//NOT SETUP IN CONFIG
 	UpdateData(true);
-	//myConfig->get_channels()->at(channelIndex).
+	myConfig->get_channels()->at(channelIndex).set_resolution_h(ChannelResolutionX);
 	UpdateData(false);
 }
 
 
 void MainDialog::OnEnChangeChannelResolutionY()
 {
-	//NOT SETUP IN CONFIG
 	UpdateData(true);
-	//myConfig->get_channels()->at(channelIndex).
+	myConfig->get_channels()->at(channelIndex).set_resolution_v(ChannelResolutionY);
 	UpdateData(false);
 }
+
+
 
 

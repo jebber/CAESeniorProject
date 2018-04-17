@@ -20,6 +20,7 @@ private:
 	int location_v;
 	int resolution_h;
 	int resolution_v;
+	string IPaddress;
 
 public:
 	//channel constructor from config file 
@@ -37,6 +38,7 @@ public:
 	void set_location_v(int input);
 	void set_resolution_h(int input);
 	void set_resolution_v(int input);
+	void set_IPaddress(string input);
 
 	//Getters
 	int get_number();
@@ -46,6 +48,7 @@ public:
 	int get_location_v();
 	int get_resolution_h();
 	int get_resolution_v();
+	string get_IPaddress();
 
 	//Output
 	void display_channel_console();
