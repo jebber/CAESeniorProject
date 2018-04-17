@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Grayscale.h"
 #include "afxdialogex.h"
+#include "Configuration.h"
 #include "resource.h"
 
 
@@ -11,13 +12,13 @@
 
 IMPLEMENT_DYNAMIC(Grayscale, CDialog)
 
-Grayscale::Grayscale(CWnd* pParent /*=NULL*/)
+Grayscale::Grayscale(CWnd* pParent, Configuration* myConfig)
 	: CDialog(IDD_GRAYSCALE, pParent)
-	, GrayscaleFullPattern(FALSE)
-	, GrayscaleVertical(false)
-	, GrayscaleHorizontal(false)
+	, GrayscaleFullPattern(myConfig->get_full_pattern())
+	, GrayscaleVertical(!myConfig->get_display_horizontal())
+	, GrayscaleHorizontal(myConfig->get_display_horizontal())
 {
-
+	this->config = myConfig;
 }
 
 Grayscale::~Grayscale()
@@ -32,7 +33,28 @@ void Grayscale::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(Grayscale, CDialog)
+	ON_BN_CLICKED(IDC_GRAYSCALE_VERTICAL, &Grayscale::OnBnClickedGrayscaleVertical)
+	ON_BN_CLICKED(IDC_GRAYSCALE_HORIZONTAL, &Grayscale::OnBnClickedGrayscaleHorizontal)
+	ON_BN_CLICKED(IDC_GRAYSCALE_FULL_DISPLAY, &Grayscale::OnBnClickedGrayscaleFullDisplay)
 END_MESSAGE_MAP()
 
 
 // Grayscale message handlers
+
+
+void Grayscale::OnBnClickedGrayscaleVertical()
+{
+	config->set_display_horizontal(false);
+}
+
+
+void Grayscale::OnBnClickedGrayscaleHorizontal()
+{
+	config->set_display_horizontal(true);
+}
+
+
+void Grayscale::OnBnClickedGrayscaleFullDisplay()
+{
+	config->set_full_pattern(true);
+}

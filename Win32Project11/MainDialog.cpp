@@ -127,7 +127,6 @@ public:
 	int opacityIndex;
 	afx_msg void OnBnClickedButtonRun();
 	afx_msg void OnFileSaveas();
-	afx_msg void OnCbnSelchangeFullWhiteOpacity();
 };
 
 BEGIN_MESSAGE_MAP(MainDialog, CDialog)
@@ -152,7 +151,6 @@ BEGIN_MESSAGE_MAP(MainDialog, CDialog)
 	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_Y, &MainDialog::OnEnChangeChannelResolutionY)
 	ON_BN_CLICKED(IDC_BUTTON_RUN, &MainDialog::OnBnClickedButtonRun)
 	ON_COMMAND(ID_FILE_SAVEAS, &MainDialog::OnFileSaveas)
-	ON_CBN_SELCHANGE(IDC_FULL_WHITE_OPACITY, &MainDialog::OnCbnSelchangeFullWhiteOpacity)
 END_MESSAGE_MAP()
 
 class MyApp : public CWinApp
@@ -184,6 +182,9 @@ void MainDialog::OnFileNew()
 	ChannelConfig temp;
 	myConfig->get_channels()->push_back(temp);
 	NumberOfChannels = 1;
+	
+	CComboBox* m_pComboBox = (CComboBox*)GetDlgItem(IDC_TEST_PATTERN);
+	m_pComboBox->SetCurSel(myConfig->get_test_pattern());
 
 	resetChannels();
 	setScreenGui();
@@ -198,9 +199,17 @@ void MainDialog::OnFileOpen()
 	if (openDlg.DoModal() == IDOK) {
 		inFile.open(openDlg.GetPathName(), std::ios::in);
 		myConfig = new Configuration(inFile);
-		inFile.close();
 
+		CT2CA pszConvertedAnsiString(openDlg.GetPathName());
+		string str(pszConvertedAnsiString);
+		myConfig->set_name(str);
+
+		inFile.close();
 		NumberOfChannels = myConfig->get_num_channels();
+
+		CComboBox* m_pComboBox = (CComboBox*)GetDlgItem(IDC_TEST_PATTERN);
+		m_pComboBox->SetCurSel(myConfig->get_test_pattern());
+
 		resetChannels();
 		setScreenGui();
 	}
@@ -215,7 +224,12 @@ void MainDialog::OnFileSave()
 	CFileDialog saveDlg(FALSE, NULL, NULL,
 		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("txt Files(*.txt)|*.txt||"), this);
 	if (saveDlg.DoModal() == IDOK) {
-		outFile.open(saveDlg.GetPathName(), std::ios::out);
+		
+		CT2CA pszConvertedAnsiString(saveDlg.GetPathName());
+		string str(pszConvertedAnsiString);
+		
+		myConfig->set_name(str);
+		outFile.open(str, std::ios::out);
 		myConfig->output_config_file(outFile);
 		outFile.close();
 	}
@@ -298,9 +312,14 @@ void MainDialog::setChannelGui(int sel)
 	ChannelPosX = myConfig->get_channels()->at(sel).get_location_h();
 	ChannelPosY = myConfig->get_channels()->at(sel).get_location_v();
 	ChannelDistance = 0;		//Still needs to be added to config file?
-	ChannelIP = _T("0.0.0");		//Still needs to be added to config file?
 	ChannelResolutionX = myConfig->get_channels()->at(sel).get_resolution_h();
 	ChannelResolutionY = myConfig->get_channels()->at(sel).get_resolution_v();
+
+	CString temp;
+	string temp2;
+	temp2 = myConfig->get_channels()->at(sel).get_IPaddress();
+	temp = temp2.c_str();
+	ChannelIP = temp;
 
 	UpdateData(false);
 }
@@ -317,6 +336,12 @@ void MainDialog::resetChannels()
 	{
 		str.Format(_T("%d"), i);
 		m_pComboBox->AddString(str);
+	}
+
+	if (NumberOfChannels > 0)
+	{
+		m_pComboBox->SetCurSel(0);
+		setChannelGui(0);
 	}
 }
 
@@ -346,11 +371,13 @@ void MainDialog::OnBnClickedButtonRun()
 	addr.ai_protocol = IPPROTO_TCP;
 
 
-	// Resolve the server address and port
-	//CString ip;
-	//ip.Format("127.0.0.1", myConfig->get_channels()->at(0).get_IPaddress());
+	//Resolve the server address and port
+	CString *ip = new CString();
+	string tmp = myConfig->get_channels()->at(0).get_IPaddress();
 
-	getaddrinfo("127.0.0.1", DEFAULT_PORT, &addr, &result);
+	getaddrinfo(tmp.c_str(), DEFAULT_PORT, &addr, &result);
+
+	//delete ip;
 
 	SOCKET ConnectSocket = INVALID_SOCKET;
 
@@ -403,8 +430,8 @@ void MainDialog::OnBnClickedButtonEditTest()
 	AFS dlg0;
 	ResolutionPattern dlg1;
 	ColorBars dlg2(NULL, myConfig);
-	FullWhite dlg3;
-	Grayscale dlg4;
+	FullWhite dlg3(NULL, myConfig);
+	Grayscale dlg4(NULL, myConfig);
 
 	/*CComboBox *m_pComboBox2 = (CComboBox *)dlg3.GetDlgItem(IDC_FULL_WHITE_OPACITY);
 	opacityIndex = m_pComboBox2->GetCurSel();*/
@@ -436,32 +463,21 @@ void MainDialog::OnBnClickedButtonEditTest()
 			myConfig->set_range(dlg1.ResolutionRange);
 		}
 		break;
-	case 2:
-		/*tempBool = myConfig->get_display_horizontal();
-		if (tempBool == true)
-		{
-			dlg2.ColorBarsHorizontal = true;
-			dlg2.ColorBarsVertical = false;
-		}
-		else
-		{
-			dlg2.ColorBarsHorizontal = false;
-			dlg2.ColorBarsVertical = true;
-		}*/
+	case 2: //Color Bars
+		//dlg2.setButtons();
 		if (dlg2.DoModal() == IDOK)
 		{
-			//myConfig->set_display_horizontal(dlg2.ColorBarsHorizontal);
 		}
 		break;
 	case 5:
 		
 		if (dlg3.DoModal() == IDOK)
 		{
-			myConfig->set_opacity(opacityIndex);
+			myConfig->set_opacity(dlg3.input);
 		}
 		break;
 	case 0:
-		tempBool = myConfig->get_display_horizontal();
+		/*tempBool = myConfig->get_display_horizontal();
 		if (tempBool == true)
 		{
 			dlg4.GrayscaleHorizontal = true;
@@ -475,11 +491,11 @@ void MainDialog::OnBnClickedButtonEditTest()
 		if (myConfig->get_full_pattern() == true)
 			dlg4.GrayscaleFullPattern = true;
 		else
-			dlg4.GrayscaleFullPattern = false;
+			dlg4.GrayscaleFullPattern = false;*/
 		if (dlg4.DoModal() == IDOK)
 		{
-			myConfig->set_display_horizontal(dlg4.GrayscaleHorizontal);
-			myConfig->set_full_pattern(dlg4.GrayscaleFullPattern);
+			//myConfig->set_display_horizontal(dlg4.GrayscaleHorizontal);
+			//myConfig->set_full_pattern(dlg4.GrayscaleFullPattern);
 		}
 		break;
 	default:
@@ -564,9 +580,10 @@ void MainDialog::OnEnChangeChannelDistance()
 
 void MainDialog::OnEnChangeChannelIp()
 {
-	//NOT SETUP IN CONFIG
 	UpdateData(true);
-
+	CT2CA pszConvertedAnsiString(ChannelIP);
+	string strStd(pszConvertedAnsiString);
+	myConfig->get_channels()->at(channelIndex).set_IPaddress(strStd);
 	UpdateData(false);
 }
 
@@ -640,12 +657,4 @@ bool MainDialog::sendfile(SOCKET sock, FILE *f)
 		} while (filesize > 0);
 	}
 	return true;
-}
-
-void MainDialog::OnCbnSelchangeFullWhiteOpacity()
-{
-	FullWhite dlg;
-	CComboBox *m_pComboBox = (CComboBox *)dlg.GetDlgItem(IDC_FULL_WHITE_OPACITY);
-	opacityIndex = m_pComboBox->GetCurSel();
-	//m_pComboBox->SetCurSel(myConfig->get_opacity());
 }

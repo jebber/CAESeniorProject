@@ -14,19 +14,10 @@ IMPLEMENT_DYNAMIC(ColorBars, CDialog)
 
 ColorBars::ColorBars(CWnd* pParent /*=NULL*/, Configuration* config)
 	: CDialog(IDD_COLOR_BARS, pParent)
-	, ColorBarsVertical(false)
-	, ColorBarsHorizontal(false)
+	, ColorBarsVertical(!config->get_display_horizontal())
+	, ColorBarsHorizontal(config->get_display_horizontal())
 {
 	this->myConfig = config;
-	/*if (config->get_display_horizontal()) {
-		CButton *ptr = (CButton*)GetDlgItem(IDC_COLOR_BARS_HORIZONTAL);
-		ptr->SetCheck(BST_CHECKED);
-	}
-	else {
-		CButton *ptr = (CButton*)GetDlgItem(IDC_COLOR_BARS_VERTICAL);
-		ptr->SetCheck(BST_CHECKED);
-	}*/
-		
 }
 
 ColorBars::~ColorBars()
@@ -36,7 +27,11 @@ ColorBars::~ColorBars()
 void ColorBars::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDCANCEL, VerticalControl);
+	DDX_Control(pDX, IDOK, HorizontalControl);
 }
+
+
 
 
 BEGIN_MESSAGE_MAP(ColorBars, CDialog)
@@ -57,4 +52,15 @@ void ColorBars::OnBnClickedColorBarsVertical()
 void ColorBars::OnBnClickedColorBarsHorizontal()
 {
 	myConfig->set_display_horizontal(true);
+}
+
+void ColorBars::setButtons() {
+	if (this->myConfig->get_display_horizontal()) {
+		CButton *ptr = (CButton*)this->GetDlgItem(IDC_COLOR_BARS_HORIZONTAL);
+		ptr->SetCheck(BST_CHECKED);
+	}
+	else {
+		CButton *ptr = (CButton*)this->GetDlgItem(IDC_COLOR_BARS_VERTICAL);
+		ptr->SetCheck(BST_CHECKED);
+	}
 }

@@ -36,8 +36,8 @@ void DisplayFrame::OnPaint()
 void DisplayFrame::createImage(CPaintDC & x)
 {
 	
-	int resX =  (config->get_total_fov_h()/channel->get_fov_h()) * channel->get_resolution_h();
-	int resY = (config->get_total_fov_v() / channel->get_fov_v()) * channel->get_resolution_v();
+	int resX =  (config->get_total_fov_h() * channel->get_resolution_h()) / channel->get_fov_h();
+	int resY = (config->get_total_fov_v() * channel->get_resolution_v()) / channel->get_fov_v();
 	
 	int pixelsPerDegreeX = resX / config->get_total_fov_h();
 	int pixelsPerDegreeY = resY / config->get_total_fov_v();

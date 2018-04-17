@@ -1,5 +1,6 @@
 #pragma once
 #include "Configuration.h"
+#include "afxwin.h"
 
 // ColorBars dialog
 
@@ -24,6 +25,9 @@ protected:
 public:
 	bool ColorBarsVertical;
 	bool ColorBarsHorizontal;
+	void setButtons();
 	afx_msg void OnBnClickedColorBarsVertical();
 	afx_msg void OnBnClickedColorBarsHorizontal();
+	CButton VerticalControl;
+	CButton HorizontalControl;
 };

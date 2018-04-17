@@ -11,11 +11,11 @@
 
 IMPLEMENT_DYNAMIC(FullWhite, CDialog)
 
-FullWhite::FullWhite(CWnd* pParent /*=NULL*/)
+FullWhite::FullWhite(CWnd* pParent, Configuration* config)
 	: CDialog(IDD_FULL_WHITE, pParent)
-	, FullWhiteOpacity(0)
+	, FullWhiteOpacity(config->get_opacity())
 {
-
+	this->myConfig = config;
 }
 
 FullWhite::~FullWhite()
@@ -30,7 +30,15 @@ void FullWhite::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(FullWhite, CDialog)
+	ON_CBN_SELCHANGE(IDC_FULL_WHITE_OPACITY, &FullWhite::OnCbnSelchangeFullWhiteOpacity)
 END_MESSAGE_MAP()
 
 
 // FullWhite message handlers
+
+
+void FullWhite::OnCbnSelchangeFullWhiteOpacity()
+{
+	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_FULL_WHITE_OPACITY);
+	input = m_pComboBox->GetCurSel();
+}
