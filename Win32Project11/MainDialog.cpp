@@ -393,13 +393,13 @@ void MainDialog::OnBnClickedButtonEditTest()
 {
 	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_TEST_PATTERN);
 	testPatternIndex = m_pComboBox->GetCurSel();
-
+	
 	/*CComboBox *m_pComboBox2 = (CComboBox *)GetDlgItem(IDC_FULL_WHITE_OPACITY);
 	int opacityIndex = m_pComboBox2->GetCurSel();*/
 
 	AFS dlg0;
 	ResolutionPattern dlg1;
-	ColorBars dlg2;
+	ColorBars dlg2(NULL, myConfig);
 	FullWhite dlg3;
 	Grayscale dlg4;
 
@@ -434,7 +434,7 @@ void MainDialog::OnBnClickedButtonEditTest()
 		}
 		break;
 	case 2:
-		tempBool = myConfig->get_display_horizontal();
+		/*tempBool = myConfig->get_display_horizontal();
 		if (tempBool == true)
 		{
 			dlg2.ColorBarsHorizontal = true;
@@ -444,10 +444,10 @@ void MainDialog::OnBnClickedButtonEditTest()
 		{
 			dlg2.ColorBarsHorizontal = false;
 			dlg2.ColorBarsVertical = true;
-		}
+		}*/
 		if (dlg2.DoModal() == IDOK)
 		{
-			myConfig->set_display_horizontal(dlg2.ColorBarsHorizontal);
+			//myConfig->set_display_horizontal(dlg2.ColorBarsHorizontal);
 		}
 		break;
 	case 5:
@@ -488,7 +488,9 @@ void MainDialog::OnBnClickedButtonEditTest()
 
 void MainDialog::OnCbnSelchangeTestPattern()
 {
-	//Test pattern drop down box
+	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_TEST_PATTERN);
+	testPatternIndex = m_pComboBox->GetCurSel();
+	myConfig->set_test_pattern(testPatternIndex);
 }
 
 

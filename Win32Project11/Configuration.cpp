@@ -33,16 +33,16 @@ Configuration::Configuration(ifstream& in_file) {
 		else if (in_string == "display_horizontal") {
 			getline(in_file, in_string);
 			if (stoi(in_string, nullptr, 0) == false)
-				this->set_display_horizontal(0);
+				this->set_display_horizontal(false);
 			else
-				this->set_display_horizontal(1);
+				this->set_display_horizontal(true);
 		}
 		else if (in_string == "full_pattern") {
 			getline(in_file, in_string);
 			if (stoi(in_string, nullptr, 0) == false)
-				this->set_display_horizontal(0);
+				this->set_full_pattern(false);
 			else
-				this->set_display_horizontal(1);
+				this->set_full_pattern(true);
 		}
 		else if (in_string == "opacity") {
 			getline(in_file, in_string);

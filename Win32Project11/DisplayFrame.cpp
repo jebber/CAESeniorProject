@@ -13,7 +13,7 @@ DisplayFrame::DisplayFrame(Configuration* config, int channel_index)
 
 	totalFOV_width = config->get_total_fov_h();
 	totalFOV_height = config->get_total_fov_v();
-	test_pattern = 7; //config->get_test_pattern();
+	test_pattern = config->get_test_pattern();
 	channel = &config->get_channels()->at(channel_index);
 	Create(0, NULL, WS_POPUP, CRect(0, 0, channel->get_resolution_h(), channel->get_resolution_v()));
 	
@@ -391,7 +391,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 		/		Color Bars
 		******************************/
 		case 2:
-			if (display_horizontal)
+			if (!display_horizontal)
 			{
 				int stripeSize = resX / 8;
 
