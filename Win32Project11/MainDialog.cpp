@@ -396,42 +396,92 @@ void MainDialog::OnBnClickedButtonEditTest()
 	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_TEST_PATTERN);
 	testPatternIndex = m_pComboBox->GetCurSel();
 
+	CComboBox *m_pComboBox2 = (CComboBox *)GetDlgItem(IDC_FULL_WHITE_OPACITY);
+	int opacityIndex = m_pComboBox2->GetCurSel();
+
 	AFS dlg0;
 	ResolutionPattern dlg1;
 	ColorBars dlg2;
 	FullWhite dlg3;
 	Grayscale dlg4;
 
+	bool tempBool;
+	/*bool get_display_horizontal();
+	bool get_full_pattern();
+	int get_opacity();
+	int get_azimuth();
+	int get_elevation();
+	int get_range();*/
+
 	switch (testPatternIndex)
 	{
 	case 0:
+		dlg0.AFSazimuth = myConfig->get_azimuth();
+		dlg0.AFSelevation = myConfig->get_elevation();
+		//dlg0.AFSspeedOfRotation
+		dlg0.AFSrange = myConfig->get_range;
 		if (dlg0.DoModal() == IDOK)
 		{
-
+			myConfig->set_azimuth(dlg0.AFSazimuth);
+			myConfig->set_elevation(dlg0.AFSelevation);
+			//Speed of Rotation?
+			myConfig->set_range(dlg0.AFSrange);
 		}
 		break;
 	case 1:
+		dlg1.ResolutionAzimuth = myConfig->get_azimuth();
+		dlg1.ResolutionElevation = myConfig->get_elevation();
+		dlg1.ResolutionRange = myConfig->get_range;
 		if (dlg1.DoModal() == IDOK)
 		{
-
+			myConfig->set_azimuth(dlg1.ResolutionAzimuth);
+			myConfig->set_elevation(dlg1.ResolutionElevation);
+			myConfig->set_range(dlg1.ResolutionRange);
 		}
 		break;
 	case 2:
+		tempBool = myConfig->get_display_horizontal();
+		if (tempBool == true)
+		{
+			dlg2.ColorBarsHorizontal = true;
+			dlg2.ColorBarsVertical = false;
+		}
+		else
+		{
+			dlg2.ColorBarsHorizontal = false;
+			dlg2.ColorBarsVertical = true;
+		}
 		if (dlg2.DoModal() == IDOK)
 		{
-
+			myConfig->set_display_horizontal(dlg2.ColorBarsHorizontal);
 		}
 		break;
 	case 3:
 		if (dlg3.DoModal() == IDOK)
 		{
-
+			myConfig->set_opacity(opacityIndex);
 		}
 		break;
 	case 4:
+		tempBool = myConfig->get_display_horizontal();
+		if (tempBool == true)
+		{
+			dlg4.GrayscaleHorizontal = true;
+			dlg4.GrayscaleVertical = false;
+		}
+		else
+		{
+			dlg4.GrayscaleHorizontal = false;
+			dlg4.GrayscaleVertical = true;
+		}
+		if (myConfig->get_full_pattern() == true)
+			dlg4.GrayscaleFullPattern = true;
+		else
+			dlg4.GrayscaleFullPattern = false;
 		if (dlg4.DoModal() == IDOK)
 		{
-
+			myConfig->set_display_horizontal(dlg4.GrayscaleHorizontal);
+			myConfig->set_full_pattern(dlg4.GrayscaleFullPattern);
 		}
 		break;
 	default:
@@ -535,7 +585,4 @@ void MainDialog::OnEnChangeChannelResolutionY()
 	myConfig->get_channels()->at(channelIndex).set_resolution_v(ChannelResolutionY);
 	UpdateData(false);
 }
-
-
-
 
