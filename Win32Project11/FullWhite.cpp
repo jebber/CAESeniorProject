@@ -13,6 +13,7 @@ IMPLEMENT_DYNAMIC(FullWhite, CDialog)
 
 FullWhite::FullWhite(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_FULL_WHITE, pParent)
+	, FullWhiteOpacity(0)
 {
 
 }
@@ -24,6 +25,7 @@ FullWhite::~FullWhite()
 void FullWhite::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_CBIndex(pDX, IDC_FULL_WHITE_OPACITY, FullWhiteOpacity);
 }
 
 

@@ -124,8 +124,10 @@ public:
 	afx_msg void OnEnChangeChannelResolutionY();
 	int channelIndex;
 	int testPatternIndex;
+	int opacityIndex;
 	afx_msg void OnBnClickedButtonRun();
 	afx_msg void OnFileSaveas();
+	afx_msg void OnCbnSelchangeFullWhiteOpacity();
 };
 
 BEGIN_MESSAGE_MAP(MainDialog, CDialog)
@@ -150,6 +152,7 @@ BEGIN_MESSAGE_MAP(MainDialog, CDialog)
 	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_Y, &MainDialog::OnEnChangeChannelResolutionY)
 	ON_BN_CLICKED(IDC_BUTTON_RUN, &MainDialog::OnBnClickedButtonRun)
 	ON_COMMAND(ID_FILE_SAVEAS, &MainDialog::OnFileSaveas)
+	ON_CBN_SELCHANGE(IDC_FULL_WHITE_OPACITY, &MainDialog::OnCbnSelchangeFullWhiteOpacity)
 END_MESSAGE_MAP()
 
 class MyApp : public CWinApp
@@ -391,8 +394,8 @@ void MainDialog::OnBnClickedButtonEditTest()
 	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_TEST_PATTERN);
 	testPatternIndex = m_pComboBox->GetCurSel();
 
-	CComboBox *m_pComboBox2 = (CComboBox *)GetDlgItem(IDC_FULL_WHITE_OPACITY);
-	int opacityIndex = m_pComboBox2->GetCurSel();
+	/*CComboBox *m_pComboBox2 = (CComboBox *)GetDlgItem(IDC_FULL_WHITE_OPACITY);
+	int opacityIndex = m_pComboBox2->GetCurSel();*/
 
 	AFS dlg0;
 	ResolutionPattern dlg1;
@@ -400,30 +403,26 @@ void MainDialog::OnBnClickedButtonEditTest()
 	FullWhite dlg3;
 	Grayscale dlg4;
 
+	/*CComboBox *m_pComboBox2 = (CComboBox *)dlg3.GetDlgItem(IDC_FULL_WHITE_OPACITY);
+	opacityIndex = m_pComboBox2->GetCurSel();*/
+	
 	bool tempBool;
-	/*bool get_display_horizontal();
-	bool get_full_pattern();
-	int get_opacity();
-	int get_azimuth();
-	int get_elevation();
-	int get_range();*/
+	
 
 	switch (testPatternIndex)
 	{
-	case 0:
+	case 8:
 		dlg0.AFSazimuth = myConfig->get_azimuth();
 		dlg0.AFSelevation = myConfig->get_elevation();
-		//dlg0.AFSspeedOfRotation
 		dlg0.AFSrange = myConfig->get_range();
 		if (dlg0.DoModal() == IDOK)
 		{
 			myConfig->set_azimuth(dlg0.AFSazimuth);
 			myConfig->set_elevation(dlg0.AFSelevation);
-			//Speed of Rotation?
 			myConfig->set_range(dlg0.AFSrange);
 		}
 		break;
-	case 1:
+	case 4:
 		dlg1.ResolutionAzimuth = myConfig->get_azimuth();
 		dlg1.ResolutionElevation = myConfig->get_elevation();
 		dlg1.ResolutionRange = myConfig->get_range();
@@ -451,13 +450,14 @@ void MainDialog::OnBnClickedButtonEditTest()
 			myConfig->set_display_horizontal(dlg2.ColorBarsHorizontal);
 		}
 		break;
-	case 3:
+	case 5:
+		
 		if (dlg3.DoModal() == IDOK)
 		{
 			myConfig->set_opacity(opacityIndex);
 		}
 		break;
-	case 4:
+	case 0:
 		tempBool = myConfig->get_display_horizontal();
 		if (tempBool == true)
 		{
@@ -635,4 +635,12 @@ bool MainDialog::sendfile(SOCKET sock, FILE *f)
 		} while (filesize > 0);
 	}
 	return true;
+}
+
+void MainDialog::OnCbnSelchangeFullWhiteOpacity()
+{
+	FullWhite dlg;
+	CComboBox *m_pComboBox = (CComboBox *)dlg.GetDlgItem(IDC_FULL_WHITE_OPACITY);
+	opacityIndex = m_pComboBox->GetCurSel();
+	//m_pComboBox->SetCurSel(myConfig->get_opacity());
 }

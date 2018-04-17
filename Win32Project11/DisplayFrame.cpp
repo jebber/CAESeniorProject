@@ -87,7 +87,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 	/*****************************
 	/		GRAYSCALE 
 	******************************/
-	case 1:
+	case 0:
 		
 		/*****************************
 		HORIZONTAL
@@ -334,7 +334,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 		/*****************************
 		/		Checkerboard 
 		******************************/
-		case 2:
+		case 1:
 
 			for (j = 0; j < resY; j += blockSizeY)
 			{
@@ -390,7 +390,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 		/*****************************
 		/		Color Bars
 		******************************/
-		case 3:
+		case 2:
 			if (display_horizontal)
 			{
 				int stripeSize = resX / 8;
@@ -575,7 +575,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 		/*****************************
 		/		1-Degree Grid
 		******************************/
-		case 4:
+		case 3:
 			//total fov image black
 			for (int i = 0; i < resY; i++)
 			{
@@ -623,7 +623,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 		/*****************************
 		/		Resolution
 		******************************/
-		case 5:
+		case 4:
 
 			//int vBarStartY = resY * 0.1;
 			//int vBarHeight = resY * 0.4;
@@ -1534,7 +1534,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 			/*****************************
 			/		Flat White
 			******************************/
-			case 6:
+			case 5:
 				if (opacity == 0)
 				{
 					for (i = 0; i < resY; i++)
@@ -1546,7 +1546,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 11)
+				else if (opacity == 1)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1557,7 +1557,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 22)
+				else if (opacity == 2)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1568,7 +1568,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 33)
+				else if (opacity == 3)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1579,7 +1579,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 44)
+				else if (opacity == 4)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1590,7 +1590,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 55)
+				else if (opacity == 5)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1601,7 +1601,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 66)
+				else if (opacity == 6)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1612,7 +1612,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 77)
+				else if (opacity == 7)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1623,7 +1623,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 88)
+				else if (opacity == 8)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1634,7 +1634,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 						}
 					}
 				}
-				else if (opacity == 100)
+				else if (opacity == 9)
 				{
 					for (i = 0; i < resY; i++)
 					{
@@ -1653,7 +1653,7 @@ void DisplayFrame::createImage(CPaintDC & x)
 			/*****************************
 			/		5-Degree grid
 			******************************/
-			case 7:
+			case 6:
 				//total fov image black
 				for (int i = 0; i < resY; i++)
 				{
@@ -1700,13 +1700,13 @@ void DisplayFrame::createImage(CPaintDC & x)
 			/*****************************
 			/		Resolution H 
 			******************************/
-			case 8:
+			case 7:
 
 				break;
 			/*****************************
 			/		AFS 205 Smear
 			******************************/
-			case 9:
+			case 8:
 
 				break;
 

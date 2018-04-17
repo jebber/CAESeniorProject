@@ -73,6 +73,8 @@ Configuration::Configuration(ifstream& in_file) {
 Configuration::Configuration() {
 	this->set_name("Untitled Configuration");
 	channels = new vector<ChannelConfig>;
+	this->display_horizontal = true;
+	this->full_pattern = false;
 }
 
 Configuration::~Configuration() {
