@@ -347,6 +347,9 @@ void MainDialog::OnBnClickedButtonRun()
 
 
 	// Resolve the server address and port
+	//CString ip;
+	//ip.Format("127.0.0.1", myConfig->get_channels()->at(0).get_IPaddress());
+
 	getaddrinfo("127.0.0.1", DEFAULT_PORT, &addr, &result);
 
 	SOCKET ConnectSocket = INVALID_SOCKET;
@@ -374,7 +377,7 @@ void MainDialog::OnBnClickedButtonRun()
 		return;
 	}
 
-	FILE *filehandle = fopen("testChannel.txt", "rb");
+	FILE *filehandle = fopen("newTest.txt", "rb");
 	if (filehandle != NULL)
 	{
 		sendfile(ConnectSocket, filehandle);
@@ -563,7 +566,7 @@ void MainDialog::OnEnChangeChannelIp()
 {
 	//NOT SETUP IN CONFIG
 	UpdateData(true);
-	//myConfig->get_channels()->at(channelIndex).
+
 	UpdateData(false);
 }
 

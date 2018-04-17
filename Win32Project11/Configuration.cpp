@@ -31,7 +31,7 @@ Configuration::Configuration(ifstream& in_file) {
 			this->set_test_pattern(stoi(in_string, nullptr, 0));
 		}
 		else if (in_string == "display_horizontal") {
-			getline(in_file, in_string);
+ 			getline(in_file, in_string);
 			if (stoi(in_string, nullptr, 0) == false)
 				this->set_display_horizontal(false);
 			else

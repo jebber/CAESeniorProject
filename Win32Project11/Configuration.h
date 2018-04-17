@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "stdafx.h"
 #include "ChannelConfig.h"
 
 using namespace std;
