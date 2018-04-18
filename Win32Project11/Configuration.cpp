@@ -218,3 +218,24 @@ void Configuration::output_config_file(ofstream& out_file) {
 		it->output_channel_file(out_file);
 	}
 }
+
+void Configuration::output_config_file(ofstream& out_file, int channel_number) {
+	out_file << "channel_number:" << channel_number << endl;
+	out_file << "name:" << this->get_name() << endl;
+	out_file << "total_fov_h:" << this->get_total_fov_h() << endl;
+	out_file << "total_fov_v:" << this->get_total_fov_v() << endl;
+	out_file << "viewer_distance:" << this->get_viewer_distance() << endl;
+	out_file << "num_channels:" << this->get_num_channels() << endl;
+	out_file << "test_pattern:" << this->get_test_pattern() << endl;
+	out_file << "display_horizontal:" << this->get_display_horizontal() << endl;
+	out_file << "full_pattern:" << this->get_full_pattern() << endl;
+	out_file << "opacity:" << this->get_opacity() << endl;
+	out_file << "azimuth:" << this->get_azimuth() << endl;
+	out_file << "elevation:" << this->get_elevation() << endl;
+	out_file << "range:" << this->get_range() << endl;
+
+	for (vector<ChannelConfig>::iterator it = channels->begin(); it != channels->end(); ++it) {
+		out_file << "-:" << endl;
+		it->output_channel_file(out_file);
+	}
+}

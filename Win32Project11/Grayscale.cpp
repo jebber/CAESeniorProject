@@ -56,5 +56,8 @@ void Grayscale::OnBnClickedGrayscaleHorizontal()
 
 void Grayscale::OnBnClickedGrayscaleFullDisplay()
 {
-	config->set_full_pattern(true);
+	if (config->get_full_pattern())
+		config->set_full_pattern(false);
+	else
+		config->set_full_pattern(true);
 }

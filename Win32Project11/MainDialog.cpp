@@ -370,50 +370,57 @@ void MainDialog::OnBnClickedButtonRun()
 	addr.ai_socktype = SOCK_STREAM;
 	addr.ai_protocol = IPPROTO_TCP;
 
+	for (int i = 0; i < NumberOfChannels; i++) {
+		//Resolve the server address and port
+		string tmp = myConfig->get_channels()->at(i).get_IPaddress();
+		const char* tmp2 = tmp.c_str();
+		PCSTR tmp3 = (PCSTR)tmp2;
 
-	//Resolve the server address and port
-	CString *ip = new CString();
-	string tmp = myConfig->get_channels()->at(0).get_IPaddress();
+		getaddrinfo(tmp3, DEFAULT_PORT, &addr, &result);
 
-	getaddrinfo(tmp.c_str(), DEFAULT_PORT, &addr, &result);
+		//delete ip;
 
-	//delete ip;
+		SOCKET ConnectSocket = INVALID_SOCKET;
 
-	SOCKET ConnectSocket = INVALID_SOCKET;
+		// Attempt to connect to the first address returned by
+		// the call to getaddrinfo
+		ptr = result;
 
-	// Attempt to connect to the first address returned by
-	// the call to getaddrinfo
-	ptr = result;
+		// Create a SOCKET for connecting to channel
+		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+			ptr->ai_protocol);
 
-	// Create a SOCKET for connecting to channel
-	ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-		ptr->ai_protocol);
+		// Connect to server.
+		int check = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		if (check == SOCKET_ERROR) {
+			closesocket(ConnectSocket);
+			ConnectSocket = INVALID_SOCKET;
+		}
 
-	// Connect to server.
-	int check = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-	if (check == SOCKET_ERROR) {
+		freeaddrinfo(result);
+
+		if (ConnectSocket == INVALID_SOCKET) {
+			MessageBox(_T("Unable to connect to server!"));
+			WSACleanup();
+			return;
+		}
+
+		ofstream out;
+		out.open("temp.txt", std::ios::out);
+		myConfig->output_config_file(out, i);
+		out.close();
+
+		FILE* filehandle = fopen("temp.txt", "rb");
+		if (filehandle != NULL)
+		{
+			sendfile(ConnectSocket, filehandle);
+			fclose(filehandle);
+			remove("temp.txt");
+		}
+		// cleanup
 		closesocket(ConnectSocket);
-		ConnectSocket = INVALID_SOCKET;
 	}
-
-	freeaddrinfo(result);
-
-	if (ConnectSocket == INVALID_SOCKET) {
-		MessageBox(_T("Unable to connect to server!"));
-		WSACleanup();
-		return;
-	}
-
-	FILE *filehandle = fopen("newTest.txt", "rb");
-	if (filehandle != NULL)
-	{
-		sendfile(ConnectSocket, filehandle);
-		fclose(filehandle);
-	}
-
-
-	// cleanup
-	closesocket(ConnectSocket);
+	
 	WSACleanup();
 
 }
@@ -464,7 +471,6 @@ void MainDialog::OnBnClickedButtonEditTest()
 		}
 		break;
 	case 2: //Color Bars
-		//dlg2.setButtons();
 		if (dlg2.DoModal() == IDOK)
 		{
 		}
@@ -477,25 +483,8 @@ void MainDialog::OnBnClickedButtonEditTest()
 		}
 		break;
 	case 0:
-		/*tempBool = myConfig->get_display_horizontal();
-		if (tempBool == true)
-		{
-			dlg4.GrayscaleHorizontal = true;
-			dlg4.GrayscaleVertical = false;
-		}
-		else
-		{
-			dlg4.GrayscaleHorizontal = false;
-			dlg4.GrayscaleVertical = true;
-		}
-		if (myConfig->get_full_pattern() == true)
-			dlg4.GrayscaleFullPattern = true;
-		else
-			dlg4.GrayscaleFullPattern = false;*/
 		if (dlg4.DoModal() == IDOK)
 		{
-			//myConfig->set_display_horizontal(dlg4.GrayscaleHorizontal);
-			//myConfig->set_full_pattern(dlg4.GrayscaleFullPattern);
 		}
 		break;
 	default:

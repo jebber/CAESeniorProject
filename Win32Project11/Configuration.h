@@ -69,6 +69,7 @@ public:
 	//Output
 	void display_config_console();
 	void output_config_file(ofstream& out_file);
+	void output_config_file(ofstream& out_file, int channel_number);
 
 	//TODO: Error detection
 
