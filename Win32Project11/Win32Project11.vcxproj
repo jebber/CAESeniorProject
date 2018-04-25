@@ -152,9 +152,7 @@
     <ClCompile Include="ChannelConfig.cpp" />
     <ClCompile Include="ColorBars.cpp" />
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="DisplayFrame.cpp" />
     <ClCompile Include="FullWhite.cpp" />
-    <ClCompile Include="Generator.cpp" />
     <ClCompile Include="Grayscale.cpp" />
     <ClCompile Include="MainDialog.cpp" />
     <ClCompile Include="ResolutionPattern.cpp" />
@@ -164,9 +162,7 @@
     <ClInclude Include="ChannelConfig.h" />
     <ClInclude Include="ColorBars.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="DisplayFrame.h" />
     <ClInclude Include="FullWhite.h" />
-    <ClInclude Include="Generator.h" />
     <ClInclude Include="Grayscale.h" />
     <ClInclude Include="ResolutionPattern.h" />
     <ClInclude Include="resource.h" />

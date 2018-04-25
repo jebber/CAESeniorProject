@@ -8,14 +8,12 @@
 #include <fstream>
 #include "resource.h"
 #include "Configuration.h"
-#include "Generator.h"
 #include "ChannelConfig.h"
 #include "ResolutionPattern.h"
 #include "AFS.h"
 #include "Grayscale.h"
 #include "ColorBars.h"
 #include "FullWhite.h"
-#include "DisplayFrame.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -31,28 +29,36 @@ public:
 	CMenu MainMenu;
 	std::ofstream outFile;
 	std::ifstream inFile;
-	DisplayFrame* frm;
 
+	vector<SOCKET> sockets;
+
+
+	//Functions for sending coknfiguration file
 	bool MainDialog::senddata(SOCKET sock, void *buf, int buflen);
 	bool MainDialog::sendlong(SOCKET sock, long value);
 	bool MainDialog::sendfile(SOCKET sock, FILE *f);
-	
+
+	void OnPaint();
+	void DrawPreview(CPaintDC &dc);
+	bool paint = false;
+	bool runOnce = false;
+
 	MainDialog(CWnd* pParent = NULL): CDialog(MainDialog::IDD, pParent)
-		, ViewerDistance(0)
-		, ScreenHFOV(0)
-		, ScreenVFOV(0)
-		, NumberOfChannels(0)
-		, ScreenGeometry(_T(""))
+		, ViewerDistance(_T("0"))
+		, ScreenHFOV(_T("0"))
+		, ScreenVFOV(_T("0"))
+		, NumberOfChannels(_T("0"))
+		, ScreenGeometry(_T("Flat"))
 		, TestPattern(_T(""))
-		, ChannelHFOV(0)
-		, ChannelVFOV(0)
-		, ChannelPosX(0)
-		, ChannelPosY(0)
-		, ChannelDistance(0)
-		, ChannelIP(_T("TEST TEST"))
-		, ChannelResolutionX(0)
-		, ChannelResolutionY(0)
-		, ChannelSelect(0)
+		, ChannelHFOV(_T("0"))
+		, ChannelVFOV(_T("0"))
+		, ChannelPosX(_T("0"))
+		, ChannelPosY(_T("0"))
+		, ChannelDistance(_T("0"))
+		, ChannelIP(_T("0.0.0"))
+		, ChannelResolutionX(_T("0"))
+		, ChannelResolutionY(_T("0"))
+		, ChannelSelect()
 	{ }
 	
 	virtual ~MainDialog() {};
@@ -62,7 +68,8 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX) {
-		CDialog::DoDataExchange(pDX); DDX_Text(pDX, IDC_SCREEN_HFOV, ScreenHFOV);
+		CDialog::DoDataExchange(pDX); 
+		DDX_Text(pDX, IDC_SCREEN_HFOV, ScreenHFOV);
 		DDX_Text(pDX, IDC_VIEWER_DISTANCE, ViewerDistance);
 		DDX_Text(pDX, IDC_SCREEN_VFOV, ScreenVFOV);
 		DDX_Text(pDX, IDC_NUMBER_OF_CHANNELS, NumberOfChannels);
@@ -88,20 +95,20 @@ public:
 	afx_msg void OnFileNew();
 	afx_msg void OnFileOpen();
 	afx_msg void OnFileSave();
-	int ViewerDistance;
-	int ScreenHFOV;
-	int ScreenVFOV;
-	int NumberOfChannels;
+	CString ViewerDistance;
+	CString ScreenHFOV;
+	CString ScreenVFOV;
+	CString NumberOfChannels;
 	CString ScreenGeometry;
 	CString TestPattern;
-	int ChannelHFOV;
-	int ChannelVFOV;
-	int ChannelPosX;
-	int ChannelPosY;
-	int ChannelDistance;
+	CString ChannelHFOV;
+	CString ChannelVFOV;
+	CString ChannelPosX;
+	CString ChannelPosY;
+	CString ChannelDistance;
 	CString ChannelIP;
-	int ChannelResolutionX;
-	int ChannelResolutionY;
+	CString ChannelResolutionX;
+	CString ChannelResolutionY;
 	afx_msg void OnEnChangeChannelHfov();
 	int ChannelSelect;
 	afx_msg void OnEnChangeNumberOfChannels();
@@ -151,11 +158,11 @@ BEGIN_MESSAGE_MAP(MainDialog, CDialog)
 	ON_EN_CHANGE(IDC_CHANNEL_RESOLUTION_Y, &MainDialog::OnEnChangeChannelResolutionY)
 	ON_BN_CLICKED(IDC_BUTTON_RUN, &MainDialog::OnBnClickedButtonRun)
 	ON_COMMAND(ID_FILE_SAVEAS, &MainDialog::OnFileSaveas)
+	ON_WM_PAINT()
 END_MESSAGE_MAP()
 
 class MyApp : public CWinApp
 {
-	//MainDialog *wnd;
 public:
 	GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
@@ -167,6 +174,8 @@ public:
 		m_pMainWnd = &dlg;
 		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 		myConfig = new Configuration();
+		ChannelConfig temp;
+		myConfig->get_channels()->push_back(temp);
 		INT_PTR nResponce = dlg.DoModal();
 		return TRUE;
 	}
@@ -179,10 +188,11 @@ void MainDialog::OnFileNew()
 {
 	myConfig = new Configuration();
 	myConfig->set_num_channels(1);
+	 
 	ChannelConfig temp;
 	myConfig->get_channels()->push_back(temp);
-	NumberOfChannels = 1;
-	
+	NumberOfChannels = _T("1"); 
+
 	CComboBox* m_pComboBox = (CComboBox*)GetDlgItem(IDC_TEST_PATTERN);
 	m_pComboBox->SetCurSel(myConfig->get_test_pattern());
 
@@ -205,7 +215,7 @@ void MainDialog::OnFileOpen()
 		myConfig->set_name(str);
 
 		inFile.close();
-		NumberOfChannels = myConfig->get_num_channels();
+		NumberOfChannels.Format(_T("%d"), myConfig->get_num_channels());
 
 		CComboBox* m_pComboBox = (CComboBox*)GetDlgItem(IDC_TEST_PATTERN);
 		m_pComboBox->SetCurSel(myConfig->get_test_pattern());
@@ -253,31 +263,31 @@ void MainDialog::OnFileSaveas()
 
 void MainDialog::OnEnChangeNumberOfChannels()
 {
-	int oldNumber = NumberOfChannels;
+	int oldNumber = _ttoi(NumberOfChannels);
 	CString str;
 
 	UpdateData(true);
-
+	int newNumber = _ttoi(NumberOfChannels);
 	resetChannels();
 	
 	if (oldNumber == 0) {
-		for (int i = 0; i < NumberOfChannels; i++) {
+		for (int i = 0; i < newNumber; i++) {
 			ChannelConfig *channel = new ChannelConfig();
 			myConfig->get_channels()->push_back(*channel);
 		}
 	}
-	else if (oldNumber > NumberOfChannels) {
-		for (int i = myConfig->get_num_channels(); i < NumberOfChannels; i++) {
+	else if (oldNumber > newNumber) {
+		for (int i = myConfig->get_num_channels(); i < newNumber; i++) {
 			ChannelConfig *channel = new ChannelConfig();
 			myConfig->get_channels()->push_back(*channel);
 		}
 	}
 	else {
-		myConfig->get_channels()->resize(NumberOfChannels);
+		myConfig->get_channels()->resize(newNumber);
 	}
 
 	//setChannelGui(oldNumber);	//NEW		Still displaying old numbers if reducing the number of channels down!
-	myConfig->set_num_channels(NumberOfChannels);	
+	myConfig->set_num_channels(newNumber);	
 	UpdateData(false);
 }
 
@@ -293,11 +303,17 @@ void MainDialog::OnCbnSelchangeChannelSelect()
 
 void MainDialog::setScreenGui()
 {
+	int temp;
+
 	UpdateData(true);
-	ViewerDistance = myConfig->get_viewer_distance();
-	ScreenHFOV = myConfig->get_total_fov_h();
-	ScreenVFOV = myConfig->get_total_fov_v();
-	NumberOfChannels = myConfig->get_num_channels();	
+	temp = myConfig->get_viewer_distance();
+	ViewerDistance.Format(_T("%d"), temp);
+	temp = myConfig->get_total_fov_h();
+	ScreenHFOV.Format(_T("%d"), temp);
+	temp = myConfig->get_total_fov_v();
+	ScreenVFOV.Format(_T("%d"), temp);
+	temp = myConfig->get_num_channels();
+	NumberOfChannels.Format(_T("%d"), temp);
 
 	UpdateData(false);
 }
@@ -307,13 +323,13 @@ void MainDialog::setChannelGui(int sel)
 {
 	UpdateData(true);
 
-	ChannelHFOV = myConfig->get_channels()->at(sel).get_fov_h();
-	ChannelVFOV = myConfig->get_channels()->at(sel).get_fov_v();
-	ChannelPosX = myConfig->get_channels()->at(sel).get_location_h();
-	ChannelPosY = myConfig->get_channels()->at(sel).get_location_v();
-	ChannelDistance = 0;		//Still needs to be added to config file?
-	ChannelResolutionX = myConfig->get_channels()->at(sel).get_resolution_h();
-	ChannelResolutionY = myConfig->get_channels()->at(sel).get_resolution_v();
+	ChannelHFOV.Format(_T("%d"), myConfig->get_channels()->at(sel).get_fov_h());
+	ChannelVFOV.Format(_T("%d"), myConfig->get_channels()->at(sel).get_fov_v());
+	ChannelPosX.Format(_T("%d"), myConfig->get_channels()->at(sel).get_location_h());
+	ChannelPosY.Format(_T("%d"), myConfig->get_channels()->at(sel).get_location_v());
+	ChannelDistance = _T("0");		//Still needs to be added to config file?
+	ChannelResolutionX.Format(_T("%d"), myConfig->get_channels()->at(sel).get_resolution_h());
+	ChannelResolutionY.Format(_T("%d"), myConfig->get_channels()->at(sel).get_resolution_v());
 
 	CString temp;
 	string temp2;
@@ -331,14 +347,14 @@ void MainDialog::resetChannels()
 	
 	CComboBox *m_pComboBox = (CComboBox *)GetDlgItem(IDC_CHANNEL_SELECT);
 	m_pComboBox->ResetContent();
-
-	for (int i = 1; i <= NumberOfChannels; i++)
+	int numChannels = _ttoi(NumberOfChannels);
+	for (int i = 1; i <= numChannels; i++)
 	{
 		str.Format(_T("%d"), i);
 		m_pComboBox->AddString(str);
 	}
 
-	if (NumberOfChannels > 0)
+	if (numChannels > 0)
 	{
 		m_pComboBox->SetCurSel(0);
 		setChannelGui(0);
@@ -348,16 +364,62 @@ void MainDialog::resetChannels()
 
 void MainDialog::OnBnClickedButtonPreview()
 {
-	frm = new DisplayFrame (myConfig, 0);
-	frm->ShowWindow(SW_SHOW);
-	frm->UpdateWindow();
+	char sendbuf[10] = "stop";
+	int buflength = 10;
+	int numChannels = _ttoi(NumberOfChannels);
+	
+	for (int i = numChannels - 1; i > 0; i--) {
+		
+		//send stop message
+		send(sockets.at(i), sendbuf, buflength, 0);
+
+		// cleanup
+		closesocket(sockets.at(i));
+		sockets.pop_back();
+	}
+
+	WSACleanup();
 }
 
+void MainDialog::OnPaint() {
+	CPaintDC dc(this);
+	Graphics graphics(dc);
+
+	if (paint) {
+
+		this->DrawPreview(dc);
+	}
+}
+
+void MainDialog::DrawPreview(CPaintDC &dc) {
+	Graphics graphics(dc);
+
+	Pen      pen(Color(255, 0, 0, 0));
+	SolidBrush brush(Color(0, 100, 0, 0));
+	Rect previewRect(15, 15, 400, 200);
+	Region previewRegion(previewRect);
+
+	graphics.FillRegion(&brush, &previewRegion);
+
+	graphics.DrawRectangle(&pen, 30, 30, 800, 400);
+
+}
 
 void MainDialog::OnBnClickedButtonRun()
 {
-	//OnFileSave();
+	float resx, resy, fovh, fovv;
 
+	for (int i = 0; i < _ttoi(NumberOfChannels); i++) {
+		resx = myConfig->get_channels()->at(i).get_resolution_h();
+		resy = myConfig->get_channels()->at(i).get_resolution_v();
+		fovh = myConfig->get_channels()->at(i).get_fov_h();
+		fovv = myConfig->get_channels()->at(i).get_fov_v();
+	
+		if ((resx / resy) / (fovh / fovv) != 1 ) {
+			MessageBox(_T("Channel resolution ratio does not match FOV ratio. May result in unexpected test patterns"));
+			break;
+		}
+	}
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
@@ -369,8 +431,9 @@ void MainDialog::OnBnClickedButtonRun()
 	addr.ai_family = AF_UNSPEC;
 	addr.ai_socktype = SOCK_STREAM;
 	addr.ai_protocol = IPPROTO_TCP;
+	int numChannels = _ttoi(NumberOfChannels);
 
-	for (int i = 0; i < NumberOfChannels; i++) {
+	for (int i = 0; i < numChannels; i++) {
 		//Resolve the server address and port
 		string tmp = myConfig->get_channels()->at(i).get_IPaddress();
 		const char* tmp2 = tmp.c_str();
@@ -381,30 +444,33 @@ void MainDialog::OnBnClickedButtonRun()
 		//delete ip;
 
 		SOCKET ConnectSocket = INVALID_SOCKET;
+		sockets.push_back(ConnectSocket);
 
 		// Attempt to connect to the first address returned by
 		// the call to getaddrinfo
 		ptr = result;
 
 		// Create a SOCKET for connecting to channel
-		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+		sockets.at(i) = socket(ptr->ai_family, ptr->ai_socktype,
 			ptr->ai_protocol);
 
 		// Connect to server.
-		int check = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		int check = connect(sockets.at(i), ptr->ai_addr, (int)ptr->ai_addrlen);
 		if (check == SOCKET_ERROR) {
-			closesocket(ConnectSocket);
-			ConnectSocket = INVALID_SOCKET;
+			closesocket(sockets.at(i));
+			sockets.at(i) = INVALID_SOCKET;
 		}
 
 		freeaddrinfo(result);
 
-		if (ConnectSocket == INVALID_SOCKET) {
+		if (sockets.at(i) == INVALID_SOCKET) {
 			MessageBox(_T("Unable to connect to server!"));
 			WSACleanup();
 			return;
 		}
+	}
 
+	for (int i = 0; i < numChannels; i++) {
 		ofstream out;
 		out.open("temp.txt", std::ios::out);
 		myConfig->output_config_file(out, i);
@@ -413,16 +479,11 @@ void MainDialog::OnBnClickedButtonRun()
 		FILE* filehandle = fopen("temp.txt", "rb");
 		if (filehandle != NULL)
 		{
-			sendfile(ConnectSocket, filehandle);
+			sendfile(sockets.at(i), filehandle);
 			fclose(filehandle);
 			remove("temp.txt");
 		}
-		// cleanup
-		closesocket(ConnectSocket);
 	}
-	
-	WSACleanup();
-
 }
 
 
@@ -505,7 +566,7 @@ void MainDialog::OnCbnSelchangeTestPattern()
 void MainDialog::OnEnChangeViewerDistance()
 {
 	UpdateData(true);
-	myConfig->set_viewer_distance(ViewerDistance);
+	myConfig->set_viewer_distance(_ttoi(ViewerDistance));
 	UpdateData(false);
 }
 
@@ -513,7 +574,7 @@ void MainDialog::OnEnChangeViewerDistance()
 void MainDialog::OnEnChangeScreenHfov()
 {
 	UpdateData(true);
-	myConfig->set_total_fov_h(ScreenHFOV);
+	myConfig->set_total_fov_h(_ttoi(ScreenHFOV));
 	UpdateData(false);
 }
 
@@ -521,7 +582,7 @@ void MainDialog::OnEnChangeScreenHfov()
 void MainDialog::OnEnChangeScreenVfov()
 {
 	UpdateData(true);
-	myConfig->set_total_fov_v(ScreenVFOV);
+	myConfig->set_total_fov_v(_ttoi(ScreenVFOV));
 	UpdateData(false);
 }
 
@@ -529,7 +590,7 @@ void MainDialog::OnEnChangeScreenVfov()
 void MainDialog::OnEnChangeChannelHfov()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_fov_h(ChannelHFOV);
+	myConfig->get_channels()->at(channelIndex).set_fov_h(_ttoi(ChannelHFOV));
 	UpdateData(false);
 }
 
@@ -537,7 +598,7 @@ void MainDialog::OnEnChangeChannelHfov()
 void MainDialog::OnEnChangeChannelVfov()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_fov_v(ChannelVFOV);
+	myConfig->get_channels()->at(channelIndex).set_fov_v(_ttoi(ChannelVFOV));
 	UpdateData(false);
 }
 
@@ -545,7 +606,7 @@ void MainDialog::OnEnChangeChannelVfov()
 void MainDialog::OnEnChangeChannelPositionX()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_location_h(ChannelPosX);
+	myConfig->get_channels()->at(channelIndex).set_location_h(_ttoi(ChannelPosX));
 	UpdateData(false);
 }
 
@@ -553,16 +614,16 @@ void MainDialog::OnEnChangeChannelPositionX()
 void MainDialog::OnEnChangeChannelPositionY()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_location_v(ChannelPosY);
+	myConfig->get_channels()->at(channelIndex).set_location_v(_ttoi(ChannelPosY));
 	UpdateData(false);
 }
 
 
 void MainDialog::OnEnChangeChannelDistance()
 {
-	//NOT SETUP IN CONFIG
+
 	UpdateData(true);
-	//myConfig->get_channels()->at(channelIndex).
+	myConfig->get_channels()->at(channelIndex).set_distance_to_screen(_ttoi(ChannelDistance));
 	UpdateData(false);
 }
 
@@ -580,7 +641,7 @@ void MainDialog::OnEnChangeChannelIp()
 void MainDialog::OnEnChangeChannelResolutionX()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_resolution_h(ChannelResolutionX);
+	myConfig->get_channels()->at(channelIndex).set_resolution_h(_ttoi(ChannelResolutionX));
 	UpdateData(false);
 }
 
@@ -588,7 +649,7 @@ void MainDialog::OnEnChangeChannelResolutionX()
 void MainDialog::OnEnChangeChannelResolutionY()
 {
 	UpdateData(true);
-	myConfig->get_channels()->at(channelIndex).set_resolution_v(ChannelResolutionY);
+	myConfig->get_channels()->at(channelIndex).set_resolution_v(_ttoi(ChannelResolutionY));
 	UpdateData(false);
 }
 

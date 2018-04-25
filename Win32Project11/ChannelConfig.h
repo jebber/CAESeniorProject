@@ -20,6 +20,7 @@ private:
 	int location_v;
 	int resolution_h;
 	int resolution_v;
+	int distance_to_screen;
 	string IPaddress;
 
 public:
@@ -38,6 +39,7 @@ public:
 	void set_location_v(int input);
 	void set_resolution_h(int input);
 	void set_resolution_v(int input);
+	void set_distance_to_screen(int input);
 	void set_IPaddress(string input);
 
 	//Getters
@@ -48,6 +50,7 @@ public:
 	int get_location_v();
 	int get_resolution_h();
 	int get_resolution_v();
+	int get_distance_to_screen();
 	string get_IPaddress();
 
 	//Output

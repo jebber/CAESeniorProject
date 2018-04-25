@@ -93,6 +93,11 @@ void ChannelConfig::set_resolution_v(int input)
 	this->resolution_v = input;
 }
 
+void ChannelConfig::set_distance_to_screen(int input)
+{
+	this->distance_to_screen = input;
+}
+
 void ChannelConfig::set_IPaddress(string input)
 {
 	this->IPaddress = input;
@@ -123,6 +128,11 @@ int ChannelConfig::get_resolution_h()
 int ChannelConfig::get_resolution_v()
 {
 	return this->resolution_v;
+}
+
+int ChannelConfig::get_distance_to_screen()
+{
+	return this->distance_to_screen;
 }
 
 string ChannelConfig::get_IPaddress()

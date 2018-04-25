@@ -20,7 +20,7 @@ Configuration::Configuration(ifstream& in_file) {
 		}
 		else if (in_string == "viewer_distance") {
 			getline(in_file, in_string);
-			this->set_viewer_distance(stof(in_string, nullptr));
+			this->set_viewer_distance(stoi(in_string, nullptr));
 		}
 		else if (in_string == "num_channels") {
 			getline(in_file, in_string);
@@ -91,7 +91,7 @@ void Configuration::set_total_fov_h(int input) {
 void Configuration::set_total_fov_v(int input) {
 	this->total_fov_v = input;
 }
-void Configuration::set_viewer_distance(float input) {
+void Configuration::set_viewer_distance(int input) {
 	this->viewer_distance = input;
 }
 void Configuration::set_num_channels(int input) {
@@ -141,7 +141,7 @@ int Configuration::get_total_fov_h() {
 int Configuration::get_total_fov_v() {
 	return this->total_fov_v;
 }
-float Configuration::get_viewer_distance() {
+int Configuration::get_viewer_distance() {
 	return this->viewer_distance;
 }
 int Configuration::get_num_channels() {

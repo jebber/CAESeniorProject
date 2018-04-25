@@ -18,7 +18,7 @@ private:
 	string name;
 	int total_fov_h;       //Measured in degrees
 	int total_fov_v;       //Measured in degrees
-	float viewer_distance; //Measured in inches
+	int viewer_distance; //Measured in inches
 	int num_channels;
 	int test_pattern;
 	vector<ChannelConfig>* channels;
@@ -41,7 +41,7 @@ public:
 	void set_name(string input);
 	void set_total_fov_h(int input);
 	void set_total_fov_v(int input);
-	void set_viewer_distance(float input);
+	void set_viewer_distance(int input);
 	void set_num_channels(int input);
 	void set_test_pattern(int input);
 	void set_display_horizontal(bool input);
@@ -55,7 +55,7 @@ public:
 	string get_name();
 	int get_total_fov_h();
 	int get_total_fov_v();
-	float get_viewer_distance();
+	int get_viewer_distance();
 	int get_num_channels();
 	int get_test_pattern();
 	vector<ChannelConfig>* get_channels();
